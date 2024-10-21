@@ -9,6 +9,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import DocArrayInMemorySearch
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.prompts import PromptTemplate
+from langchain_community.vectorstores import FAISS
 
 
 st.set_page_config(page_title="ChatPDF", page_icon="📄")
@@ -19,6 +20,19 @@ st.write(
 st.write(
     "[![view source code ](https://img.shields.io/badge/view_source_code-gray?logo=github)](https://github.com/shashankdeshpande/langchain-chatbot/blob/master/pages/4_%F0%9F%93%84_chat_with_your_documents.py)"
 )
+
+# Helper function for printing docs
+
+
+def pretty_print_docs(docs):
+    print(
+        f"\n{'-' * 100}\n".join(
+            [
+                f"Document {i+1}:\n\n{d.page_content}\nMetadata: {d.metadata}"
+                for i, d in enumerate(docs)
+            ]
+        )
+    )
 
 
 class CustomDocChatbot:
@@ -52,12 +66,13 @@ class CustomDocChatbot:
             chunk_size=1000, chunk_overlap=200
         )
         splits = text_splitter.split_documents(docs)
-        vectordb = DocArrayInMemorySearch.from_documents(splits, self.embedding_model)
+        # vectordb = DocArrayInMemorySearch.from_documents(splits, self.embedding_model)
 
-        # Define retriever
-        retriever = vectordb.as_retriever(
-            search_type="mmr", search_kwargs={"k": 2, "fetch_k": 4}
-        )
+        # # Define retriever
+        # retriever = vectordb.as_retriever(
+        #     search_type="mmr", search_kwargs={"k": 2, "fetch_k": 4}
+        # )
+        retriever = FAISS.from_documents(splits, self.embedding_model).as_retriever(search_kwargs={"k": 20})
 
         # Setup memory for contextual conversation
         memory = ConversationBufferMemory(
@@ -69,16 +84,36 @@ class CustomDocChatbot:
             "Follow up question: {question}"
         )
         prompt = PromptTemplate.from_template(template)
-        question_generator_chain = LLMChain(llm=self.llm, prompt=prompt)
+        
         # Setup LLM and QA chain
-        qa_chain = ConversationalRetrievalChain.from_llm(
-            llm=question_generator_chain,
-            retriever=retriever,
-            memory=memory,
-            return_source_documents=True,
-            verbose=False,
+        # qa_chain = ConversationalRetrievalChain.from_llm(
+        #     llm=self.llm,
+        #     retriever=retriever,
+        #     memory=memory,
+        #     return_source_documents=True,
+        #     verbose=False,
+        # )
+        
+        from langchain.retrievers import ContextualCompressionRetriever
+        from langchain.retrievers.document_compressors import FlashrankRerank
+        from langchain_openai import ChatOpenAI
+
+        llm = ChatOpenAI(temperature=0)
+
+        compressor = FlashrankRerank()
+        compression_retriever = ContextualCompressionRetriever(
+            base_compressor=compressor, base_retriever=retriever
         )
-        return qa_chain
+        
+        from langchain.chains import RetrievalQA
+
+        chain = RetrievalQA.from_chain_type(
+            llm=llm,
+            retriever=compression_retriever,
+            # memory=memory,
+            return_source_documents=True,
+            verbose=False,)
+        return chain
 
     @utils.enable_chat_history
     def main(self):
@@ -101,12 +136,13 @@ class CustomDocChatbot:
             with st.chat_message("assistant"):
                 st_cb = StreamHandler(st.empty())
                 result = qa_chain.invoke(
-                    {"question": user_query}, {"callbacks": [st_cb]}
+                    user_query
                 )
-                response = result["answer"]
+                response = result["result"]
                 st.session_state.messages.append(
                     {"role": "assistant", "content": response}
                 )
+                st.write(response)
                 utils.print_qa(CustomDocChatbot, user_query, response)
 
                 # to show references

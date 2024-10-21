@@ -14,3 +14,8 @@ Do NOT skip this step.
 Then you should query the schema of the most relevant tables.
 
 streamlit run Home.py --server.enableXsrfProtection false
+langchain==0.2.9
+langchainhub==0.1.20
+langchain-community==0.2.6
+langchain_core==0.2.21
+langchain_openai==0.1.17
