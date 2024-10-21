@@ -171,6 +171,8 @@ class CustomDocChatbot:
                 st.session_state.messages.append(
                     {"role": "assistant", "content": response}
                 )
+                
+                st.write(response)
 
                 utils.print_qa(CustomDocChatbot, user_query, response)
 

@@ -1,3 +1,13 @@
+import typing
+
+if typing.TYPE_CHECKING:
+    from pydantic import *  # noqa: F403
+else:
+    try:
+        from pydantic.v1 import *  # noqa: F403
+    except ImportError:
+        pass
+
 import os
 import openai
 import streamlit as st

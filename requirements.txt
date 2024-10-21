@@ -2,7 +2,7 @@ langchain==0.2.9
 langchainhub==0.1.20
 langchain-community==0.2.6
 langchain_core==0.2.21
-langchain_openai==0.1.17
+langchain_openai
 langchain_text_splitters==0.2.2
 openai==1.35.15
 SQLAlchemy==2.0.31
@@ -14,3 +14,6 @@ docarray==0.40.0
 validators==0.33.0
 python-dotenv
 faiss-cpu
+langgraph
+langsmith
+langchain_anthropic
