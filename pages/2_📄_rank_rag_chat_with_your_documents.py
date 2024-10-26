@@ -72,7 +72,9 @@ class CustomDocChatbot:
         # retriever = vectordb.as_retriever(
         #     search_type="mmr", search_kwargs={"k": 2, "fetch_k": 4}
         # )
-        retriever = FAISS.from_documents(splits, self.embedding_model).as_retriever(search_kwargs={"k": 20})
+        retriever = FAISS.from_documents(splits, self.embedding_model).as_retriever(
+            search_kwargs={"k": 20}
+        )
 
         # Setup memory for contextual conversation
         memory = ConversationBufferMemory(
@@ -84,7 +86,7 @@ class CustomDocChatbot:
             "Follow up question: {question}"
         )
         prompt = PromptTemplate.from_template(template)
-        
+
         # Setup LLM and QA chain
         # qa_chain = ConversationalRetrievalChain.from_llm(
         #     llm=self.llm,
@@ -93,18 +95,18 @@ class CustomDocChatbot:
         #     return_source_documents=True,
         #     verbose=False,
         # )
-        
+
         from langchain.retrievers import ContextualCompressionRetriever
         from langchain.retrievers.document_compressors import FlashrankRerank
         from langchain_openai import ChatOpenAI
 
         llm = ChatOpenAI(temperature=0)
 
-        compressor = FlashrankRerank()
+        compressor = FlashrankRerank()  # ms-marco-TinyBERT-L-2-v2
         compression_retriever = ContextualCompressionRetriever(
             base_compressor=compressor, base_retriever=retriever
         )
-        
+
         from langchain.chains import RetrievalQA
 
         chain = RetrievalQA.from_chain_type(
@@ -112,7 +114,8 @@ class CustomDocChatbot:
             retriever=compression_retriever,
             # memory=memory,
             return_source_documents=True,
-            verbose=False,)
+            verbose=False,
+        )
         return chain
 
     @utils.enable_chat_history
@@ -135,9 +138,7 @@ class CustomDocChatbot:
 
             with st.chat_message("assistant"):
                 st_cb = StreamHandler(st.empty())
-                result = qa_chain.invoke(
-                    user_query
-                )
+                result = qa_chain.invoke(user_query)
                 response = result["result"]
                 st.session_state.messages.append(
                     {"role": "assistant", "content": response}

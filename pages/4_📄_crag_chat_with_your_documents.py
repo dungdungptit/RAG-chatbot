@@ -377,7 +377,7 @@ class CustomDocChatbot:
                         st.write(f"Node '{key}':")
                         response += f"\n\nNode '{key}':" 
                         # Optional: print full state at each node
-                        # pprint.pprint(value["keys"], indent=2, width=80, depth=None)
+                        # pprint(value, indent=2, width=80, depth=None)
                         # st.write(str(value))
                         # response += str(value)
                     # pprint("\n---\n")
