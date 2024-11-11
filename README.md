@@ -35,6 +35,8 @@ You can access this app through this link: [langchain-chatbot.streamlit.app](htt
 ```shell
 # Run main streamlit app
 $ streamlit run Home.py
+or if upload file is failed
+$ streamlit run Home.py --server.enableXsrfProtection false
 ```
 
 ## 📦 Running with Docker
